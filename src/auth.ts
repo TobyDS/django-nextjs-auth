@@ -1,6 +1,5 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { cookies } from 'next/headers';
 import type { NextAuthConfig } from 'next-auth';
 import type { BaseUser } from './app/types/next-auth';
 
@@ -35,16 +34,14 @@ export const authConfig = {
           }
 
           // Access cookies using Next.js cookies API
-          const parsedCookies = cookies();
-          const accessToken =
-            (await parsedCookies).get('access_token')?.value || null;
-          const refreshToken =
-            (await parsedCookies).get('refresh_token')?.value || null;
-
           const data = await response.json();
+          const cookies = response.headers.get('set-cookie');
+
+          const accessToken = cookies?.match(/access_token=([^;]+)/)?.[1];
+          const refreshToken = cookies?.match(/refresh_token=([^;]+)/)?.[1];
 
           if (!accessToken || !refreshToken) {
-            console.error('Tokens not found in cookies:', parsedCookies);
+            console.error('Tokens not found in cookies: ', cookies);
             return null;
           }
 
