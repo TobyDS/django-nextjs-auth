@@ -23,7 +23,6 @@ export const authConfig = {
 
         try {
           const { data, error, response } = await client.POST('/auth/login/', {
-            method: 'POST',
             body: {
               username: username,
               password: password,
