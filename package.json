@@ -10,6 +10,7 @@
     "types:generate": "openapi-typescript http://localhost:8000/schema -o src/app/types/openapi.d.ts --path-params-as-types"
   },
   "dependencies": {
+    "@auth/core": "^0.37.4",
     "@hookform/resolvers": "^3.9.1",
     "@radix-ui/react-label": "^2.1.0",
     "@radix-ui/react-slot": "^1.1.0",

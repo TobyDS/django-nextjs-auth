@@ -1,15 +1,66 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import type { NextAuthConfig } from 'next-auth';
-import type { BaseUser } from './app/types/next-auth';
+import type { DefaultJWT, JWT } from 'next-auth/jwt';
+import type { Session } from 'next-auth';
 import client from '@/lib/api';
+import type { components } from './app/types/openapi';
+
+type CustomUserDetails = components['schemas']['CustomUserDetails'];
+
+export function getSessionSafe<T extends Session>(
+  session: T | null
+): Omit<T, 'accessToken' | 'refreshToken'> | null {
+  if (!session) return null;
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { accessToken, refreshToken, ...safeSession } = session;
+  return safeSession;
+}
 
 interface Credentials {
   username: string;
   password: string;
 }
 
+declare module 'next-auth' {
+  interface Session {
+    user: CustomUserDetails;
+    accessToken: string;
+    refreshToken: string;
+    expires: string;
+  }
+  interface User extends CustomUserDetails {
+    accessToken: string;
+    refreshToken: string;
+    expires: string;
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT extends DefaultJWT {
+    user: components['schemas']['CustomUserDetails'];
+    accessToken: string;
+    refreshToken: string;
+    expires: string;
+  }
+}
+
+const parseCookieExpiry = (cookies: string | null): string | null => {
+  const match = cookies?.match(/access_token=[^;]+;\s*expires=([^;]+)/);
+  if (!match) return null;
+
+  const expiryDate = new Date(match[1]);
+  if (isNaN(expiryDate.getTime())) return null;
+
+  return expiryDate.toISOString();
+};
+
 export const authConfig = {
+  session: {
+    strategy: 'jwt',
+    maxAge: 24 * 60 * 60, // 24 hours
+  },
   providers: [
     CredentialsProvider({
       name: 'Django',
@@ -39,22 +90,23 @@ export const authConfig = {
             return null;
           }
 
-          // Access cookies using Next.js cookies API
           const cookies = response.headers.get('set-cookie');
 
           const accessToken = cookies?.match(/access_token=([^;]+)/)?.[1];
           const refreshToken = cookies?.match(/refresh_token=([^;]+)/)?.[1];
+          const expires = parseCookieExpiry(cookies);
 
-          if (!accessToken || !refreshToken) {
-            console.error('Tokens not found in cookies: ', cookies);
+          if (!accessToken || !refreshToken || !expires) {
+            console.error('Token or expiry not found in cookies: ', cookies);
             return null;
           }
 
           return {
-            id: String(data.user.pk),
             ...data.user,
+            email: data.user.email ?? '',
             accessToken,
             refreshToken,
+            expires,
           };
         } catch (error) {
           console.error('Authentication error:', error);
@@ -68,23 +120,30 @@ export const authConfig = {
       if (user) {
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
+        token.expires = user.expires;
         token.user = {
-          id: (user as BaseUser).id,
-          username: (user as BaseUser).username,
-          email: (user as BaseUser).email,
-          first_name: (user as BaseUser).first_name,
-          last_name: (user as BaseUser).last_name,
-          groups: (user as BaseUser).groups,
-          full_name: (user as BaseUser).full_name,
-          emailVerified: (user as BaseUser).emailVerified,
+          pk: user.pk,
+          username: user.username,
+          email: user.email || '',
+          first_name: user.first_name,
+          last_name: user.last_name,
+          groups: user.groups,
+          full_name: user.full_name,
         };
       }
       return token;
     },
-    async session({ session, token }) {
-      session.user = token.user as BaseUser;
-      session.accessToken = token.accessToken as string;
-      session.refreshToken = token.refreshToken as string;
+    async session({
+      session,
+      token,
+    }: {
+      session: Session;
+      token: JWT;
+    }): Promise<Session> {
+      session.user = token.user;
+      session.accessToken = token.accessToken;
+      session.refreshToken = token.refreshToken;
+      session.expires = token.expires;
       return session;
     },
   },
