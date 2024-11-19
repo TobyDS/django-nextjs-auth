@@ -9,6 +9,12 @@ interface SafeSessionContextValue {
   update: (data?: unknown) => Promise<SafeSession | null>;
 }
 
+/**
+ * Custom hook to provide a safe session context value.
+ * This hook omits the accessToken and refreshToken from the session data.
+ *
+ * @returns {SafeSessionContextValue} The safe session context value.
+ */
 function useSafeSession(): SafeSessionContextValue {
   const { data: session, status, update } = useSession();
 
@@ -20,7 +26,13 @@ function useSafeSession(): SafeSessionContextValue {
       } as SafeSession)
     : null;
 
-  const safeUpdate = async (data?: unknown) => {
+  /**
+   * Updates the session data and omits the accessToken and refreshToken.
+   *
+   * @param {unknown} [data] - The data to update the session with.
+   * @returns {Promise<SafeSession | null>} The updated safe session data.
+   */
+  const safeUpdate = async (data: unknown) => {
     const updatedSession = await update(data);
     if (!updatedSession) return null;
 

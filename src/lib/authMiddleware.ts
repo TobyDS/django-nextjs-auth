@@ -23,7 +23,6 @@ let refreshToken: string | undefined;
 export const authMiddleware: Middleware = {
   async onRequest({ request }) {
     if (request.url.includes('/auth/login')) {
-      console.log('Skipping authMiddleware for login request.');
       return request;
     }
 

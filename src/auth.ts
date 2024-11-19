@@ -1,65 +1,16 @@
-import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import type { NextAuthConfig } from 'next-auth';
+import NextAuth, { type NextAuthConfig, type Session } from 'next-auth';
 import type { DefaultJWT, JWT } from 'next-auth/jwt';
-import type { Session } from 'next-auth';
 import client from '@/lib/api';
-import type { components } from './app/types/openapi';
+import type { components } from '@/types/openapi';
+import parseCookieExpiry from '@/lib/parseCookieExpiry';
 
-type CustomUserDetails = components['schemas']['CustomUserDetails'];
-
-export function getSessionSafe<T extends Session>(
-  session: T | null
-): Omit<T, 'accessToken' | 'refreshToken'> | null {
-  if (!session) return null;
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { accessToken, refreshToken, ...safeSession } = session;
-  return safeSession;
-}
-
-interface Credentials {
-  username: string;
-  password: string;
-}
-
-declare module 'next-auth' {
-  interface Session {
-    user: CustomUserDetails;
-    accessToken: string;
-    refreshToken: string;
-    expires: string;
-  }
-  interface User extends CustomUserDetails {
-    accessToken: string;
-    refreshToken: string;
-    expires: string;
-  }
-}
-
-declare module 'next-auth/jwt' {
-  interface JWT extends DefaultJWT {
-    user: components['schemas']['CustomUserDetails'];
-    accessToken: string;
-    refreshToken: string;
-    expires: string;
-  }
-}
-
-const parseCookieExpiry = (cookies: string | null): string | null => {
-  const match = cookies?.match(/access_token=[^;]+;\s*expires=([^;]+)/);
-  if (!match) return null;
-
-  const expiryDate = new Date(match[1]);
-  if (isNaN(expiryDate.getTime())) return null;
-
-  return expiryDate.toISOString();
-};
+const SECONDS_IN_DAY = 24 * 60 * 60;
 
 export const authConfig = {
   session: {
     strategy: 'jwt',
-    maxAge: 24 * 60 * 60, // 24 hours
+    maxAge: SECONDS_IN_DAY,
   },
   providers: [
     CredentialsProvider({
@@ -69,8 +20,14 @@ export const authConfig = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        const { username, password } = credentials as Credentials;
-        if (!username || !password) return null;
+        if (
+          typeof credentials.username !== 'string' ||
+          typeof credentials.password !== 'string'
+        ) {
+          return null;
+        }
+
+        const { username, password } = credentials;
 
         try {
           const { data, error, response } = await client.POST('/auth/login/', {
@@ -150,3 +107,33 @@ export const authConfig = {
 } satisfies NextAuthConfig;
 
 export const { auth, signIn, signOut, handlers } = NextAuth(authConfig);
+
+/**
+ * Custom types for NextAuth
+ *
+ * @remarks
+ * For some reason this has to be in this file because it will break if it's in a separate file.
+ */
+declare module 'next-auth' {
+  interface Session {
+    user: components['schemas']['CustomUserDetails'];
+    accessToken: string;
+    refreshToken: string;
+    expires: string;
+  }
+  type CustomUserDetails = components['schemas']['CustomUserDetails'];
+  interface User extends CustomUserDetails {
+    accessToken: string;
+    refreshToken: string;
+    expires: string;
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT extends DefaultJWT {
+    user: components['schemas']['CustomUserDetails'];
+    accessToken: string;
+    refreshToken: string;
+    expires: string;
+  }
+}

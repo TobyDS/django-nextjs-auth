@@ -4,7 +4,6 @@
  * @description
  * A custom implementation of the `fetch` API to ensure compatibility with Django/DRF.
  */
-
 export const customFetch: typeof fetch = async (
   input: RequestInfo | URL,
   init?: RequestInit

@@ -111,8 +111,10 @@ export function useApi<T>(
     }
   };
 
-  // ! Fetch data only when session is authenticated. This prevents
-  // ! incorrectly showing 'no access token' error before session is hydrated
+  /**
+   * Fetch data only when session is authenticated.
+   * This prevents incorrectly showing 'no access token' error before session is hydrated.
+   */
   useEffect(() => {
     if (status === 'authenticated') {
       fetchData();

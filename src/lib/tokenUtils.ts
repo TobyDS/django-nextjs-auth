@@ -23,6 +23,7 @@ export async function refreshAccessToken(
       {
         body: {
           refresh: refreshToken,
+          // This is because the type of the body is not inferred correctly
           access: '',
         },
       }
@@ -34,6 +35,7 @@ export async function refreshAccessToken(
     }
 
     console.log('Access token successfully refreshed.');
+
     return data.access || null;
   } catch (error) {
     console.error('Error refreshing access token:', error);

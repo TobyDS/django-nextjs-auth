@@ -1,7 +1,8 @@
 import createClient from 'openapi-fetch';
+import { DJANGO_API_BASE_URL } from '@/utils/constants';
 import { authMiddleware } from '@/lib/authMiddleware';
 import { customFetch } from '@/lib/customFetch';
-import type { paths } from '@/app/types/openapi';
+import type { paths } from '@/types/openapi';
 
 /**
  * @file API Client Configuration
@@ -18,7 +19,7 @@ import type { paths } from '@/app/types/openapi';
  * custom fetch logic to handle Content-Length headers and authentication middleware.
  */
 const client = createClient<paths>({
-  baseUrl: 'http://localhost:8000',
+  baseUrl: DJANGO_API_BASE_URL,
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
