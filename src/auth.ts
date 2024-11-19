@@ -2,6 +2,12 @@ import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import type { NextAuthConfig } from 'next-auth';
 import type { BaseUser } from './app/types/next-auth';
+import createClient from 'openapi-fetch';
+import type { paths } from './app/types/openapi';
+
+const client = createClient<paths>({
+  baseUrl: 'http://localhost:8000',
+});
 
 export const authConfig = {
   providers: [
@@ -12,29 +18,31 @@ export const authConfig = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) return null;
-
         try {
-          const response = await fetch(`http://localhost:8000/auth/login/`, {
+          // Type guard for credentials
+          if (
+            typeof credentials.username !== 'string' ||
+            typeof credentials.password !== 'string'
+          ) {
+            console.error('Invalid credentials:', credentials);
+            return null;
+          }
+
+          const { data, error, response } = await client.POST('/auth/login/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+            body: {
               username: credentials.username,
               password: credentials.password,
-            }),
+            },
           });
 
-          if (!response.ok) {
-            console.error(
-              'Response not OK:',
-              response.status,
-              response.statusText
-            );
+          if (error) {
+            console.error('Response not OK: ', error);
             return null;
           }
 
           // Access cookies using Next.js cookies API
-          const data = await response.json();
           const cookies = response.headers.get('set-cookie');
 
           const accessToken = cookies?.match(/access_token=([^;]+)/)?.[1];
