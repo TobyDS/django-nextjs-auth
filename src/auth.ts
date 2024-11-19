@@ -2,12 +2,12 @@ import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import type { NextAuthConfig } from 'next-auth';
 import type { BaseUser } from './app/types/next-auth';
-import createClient from 'openapi-fetch';
-import type { paths } from './app/types/openapi';
+import client from '@/lib/api';
 
-const client = createClient<paths>({
-  baseUrl: 'http://localhost:8000',
-});
+interface Credentials {
+  username: string;
+  password: string;
+}
 
 export const authConfig = {
   providers: [
@@ -18,27 +18,25 @@ export const authConfig = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        try {
-          // Type guard for credentials
-          if (
-            typeof credentials.username !== 'string' ||
-            typeof credentials.password !== 'string'
-          ) {
-            console.error('Invalid credentials:', credentials);
-            return null;
-          }
+        const { username, password } = credentials as Credentials;
+        if (!username || !password) return null;
 
+        try {
           const { data, error, response } = await client.POST('/auth/login/', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             body: {
-              username: credentials.username,
-              password: credentials.password,
+              username: username,
+              password: password,
             },
           });
 
           if (error) {
-            console.error('Response not OK: ', error);
+            console.error(
+              'Response not OK:',
+              response,
+              'Error details:',
+              error
+            );
             return null;
           }
 

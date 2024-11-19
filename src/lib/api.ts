@@ -1,42 +1,53 @@
-import axios from 'axios';
 import { auth } from '@/auth';
 
-const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_DJANGO_API_URL || 'http://localhost:8000',
-  withCredentials: true,
+import createClient, { type Middleware } from 'openapi-fetch';
+import type { paths } from '@/app/types/openapi';
+
+const client = createClient<paths>({
+  baseUrl: 'http://localhost:8000',
+  headers: {
+    Accept: 'application/json',
+    'Content-Type': 'application/json',
+  },
+  // Override the default Request constructor usage
+  Request: undefined,
+  // Override the default fetch usage. Using signature `fetch(new Request(...))`
+  // causes `Transfer-Encoding: chunked` and no `Content-Length` in request headers
+  // which doesn't work with Django/DRF API
+  fetch: async (input: Request) => {
+    const url = input.url;
+    const body = input.body ? await input.text() : undefined;
+    const init = {
+      method: input.method,
+      headers: Object.fromEntries(input.headers.entries()),
+      body,
+    };
+    return fetch(url, init);
+  },
 });
 
-// Request interceptor to add auth header
-apiClient.interceptors.request.use(async (config) => {
-  const session = await auth();
-  if (session?.accessToken) {
-    config.headers.Authorization = `Bearer ${session.accessToken}`;
-  }
-  return config;
-});
+let accessToken: string | undefined = undefined;
 
-// Response interceptor to handle 401s and refresh token
-apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        const session = await auth();
-        if (session?.accessToken) {
-          originalRequest.headers.Authorization = `Bearer ${session.accessToken}`;
-          return apiClient(originalRequest);
-        }
-      } catch (refreshError) {
-        console.error('Error refreshing token:', refreshError);
+const authMiddleware: Middleware = {
+  async onRequest({ request }) {
+    // fetch token, if it doesn’t exist
+    if (!accessToken) {
+      const session = await auth();
+      if (session && session.accessToken) {
+        accessToken = session.accessToken;
+      } else {
+        // handle auth error
       }
     }
 
-    return Promise.reject(error);
-  }
-);
+    // (optional) add logic here to refresh token when it expires
 
-export default apiClient;
+    // add Authorization header to every request
+    request.headers.set('Authorization', `Bearer ${accessToken}`);
+    return request;
+  },
+};
+
+client.use(authMiddleware);
+
+export default client;
