@@ -15,7 +15,7 @@ import { signOut } from 'next-auth/react';
 export default function PatientList() {
   const session = useSafeSession();
 
-  const $api = useApi();
+  const { queryClient, ...$api } = useApi();
 
   // Get logic example
   const {
@@ -30,7 +30,16 @@ export default function PatientList() {
     '/patients/patient-profiles/{id}/',
     { params: { path: { id: 6 } } }
   );
-  const mutation = $api.useMutation('put', '/patients/patient-profiles/{id}/');
+  const mutation = $api.useMutation('put', '/patients/patient-profiles/{id}/', {
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['get', '/patients/patient-profiles/'],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['get', '/patients/patient-profiles/{id}/'],
+      });
+    },
+  });
   const handleUpdate = () =>
     mutation.mutateAsync({
       params: {

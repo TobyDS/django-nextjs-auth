@@ -5,6 +5,7 @@ import createFetchClient from 'openapi-fetch';
 import createClient from 'openapi-react-query';
 import type { paths } from '@/types/openapi';
 import { useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 
 const createApiClient = () => {
   const fetchClient = createFetchClient<paths>({
@@ -14,9 +15,10 @@ const createApiClient = () => {
   return createClient(fetchClient);
 };
 
-const useApi = () => {
+export const useApi = () => {
+  const queryClient = useQueryClient();
   const client = useMemo(() => createApiClient(), []);
-  return client;
+  return { ...client, queryClient };
 };
 
 export default useApi;
