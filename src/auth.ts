@@ -5,6 +5,7 @@ import client from '@/lib/api';
 import type { components } from '@/types/openapi';
 import parseCookieExpiry from '@/lib/parseCookieExpiry';
 import { DJANGO_API_BASE_URL } from './utils/constants';
+import { NextResponse } from 'next/server';
 
 const SECONDS_IN_DAY = 24 * 60 * 60;
 
@@ -91,11 +92,15 @@ export const authConfig = {
       }
       return token;
     },
-    // authorized: async ({ auth }) => {
-    //   // Logged in users are authenticated, otherwise redirect to login page
-    //   console.log('Authorized:', !!auth);
-    //   return !!auth;
-    // },
+    authorized: async ({ request, auth }) => {
+      const path = request.url;
+      // Redirect to login page if user is not authenticated, unless accessing the auth API
+      if (!auth && !path.startsWith('/api/auth')) {
+        return NextResponse.redirect(new URL('/api/auth/signin', request.url));
+      }
+      // Logged in users are authenticated
+      return !!auth;
+    },
     async session({
       session,
       token,
