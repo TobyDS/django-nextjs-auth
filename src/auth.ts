@@ -92,7 +92,7 @@ export const authConfig = {
       }
       return token;
     },
-    authorized: async ({ request, auth }) => {
+    async authorized({ request, auth }) {
       const path = request.url;
       // Redirect to login page if user is not authenticated, unless accessing the auth API
       if (!auth && !path.startsWith('/api/auth')) {

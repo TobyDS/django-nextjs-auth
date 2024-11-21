@@ -4,7 +4,7 @@ import useApi from '@/hooks/useApi';
 import useSafeSession from '@/hooks/useSafeSession';
 
 export default function PatientList() {
-  // const { data: session } = useSafeSession();
+  const session = useSafeSession();
 
   const $api = useApi();
 
@@ -61,7 +61,7 @@ export default function PatientList() {
   return (
     <div>
       <h2 className='text-xl font-bold'>Client Session:</h2>
-      {/* <pre className='text-sm'>{JSON.stringify(session, null, 2)}</pre> */}
+      <pre className='text-sm'>{JSON.stringify(session, null, 2)}</pre>
       <h2 className='text-xl font-bold'>Patients</h2>
       <span>Total: {patients?.length || 0}</span>
       <ul className=''>
