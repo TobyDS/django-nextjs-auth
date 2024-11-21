@@ -30,6 +30,8 @@ export default function PatientList() {
     '/patients/patient-profiles/{id}/',
     { params: { path: { id: 6 } } }
   );
+  const newFirstName = patientToUpdate?.first_name === 'John' ? 'Jane' : 'John';
+  const newLastName = patientToUpdate?.last_name === 'Doe' ? 'Smith' : 'Doe';
   const mutation = $api.useMutation('put', '/patients/patient-profiles/{id}/', {
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -49,8 +51,8 @@ export default function PatientList() {
       },
       body: {
         ...patientToUpdate!,
-        last_name: 'Doe',
-        first_name: 'John',
+        first_name: newFirstName,
+        last_name: newLastName,
       },
     });
 
@@ -73,9 +75,9 @@ export default function PatientList() {
   return (
     <div>
       <div className='flex-row m-2 space-x-2'>
-        <Button>
-          <Link href='/'>Go to Server Page</Link>
-        </Button>
+        <Link href='/'>
+          <Button>Go to Server Page</Button>
+        </Link>
         <Button onClick={() => signOut()}>Logout</Button>
       </div>
       <Accordion type='single' collapsible>
@@ -88,28 +90,18 @@ export default function PatientList() {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-      <h2 className='text-xl font-bold'>Patients</h2>
-      <span>Total: {patients?.length || 0}</span>
-      <ul className=''>
+      <h2 className='mt-5 font-bold text-xl'>Patients: </h2>
+      <ul className='ml-5 list-disc'>
         {patients.map((patient) => (
-          <li key={patient.id} className='py-2'>
-            <div className='flex items-center space-x-4'>
-              <div className='flex-1 min-w-0'>
-                <p className='text-sm font-medium text-gray-900 truncate'>
-                  {patient.full_name}
-                </p>
-                {patient.email && (
-                  <p className='text-sm text-gray-500 truncate'>
-                    {patient.email}
-                  </p>
-                )}
-              </div>
-            </div>
-          </li>
+          <li key={patient.id}>{`ID ${patient.id}: ${patient.full_name}`}</li>
         ))}
       </ul>
-      <Button onClick={handleUpdate} disabled={mutation.isPending}>
-        {mutation.isPending ? 'Updating...' : 'Update Patient'}
+      <Button
+        className='m-3'
+        onClick={handleUpdate}
+        disabled={mutation.isPending}
+      >
+        {mutation.isPending ? 'Updating...' : 'Update Patient Name'}
       </Button>
     </div>
   );

@@ -47,18 +47,20 @@ export default async function Home() {
 
   return (
     <div>
-      <form
-        className='flex-row m-2 space-x-2'
-        action={async () => {
-          'use server';
-          await signOut();
-        }}
-      >
-        <Button>
-          <Link href='/patients'>Go to Client Page</Link>
-        </Button>
-        <Button type='submit'>Logout</Button>
-      </form>
+      <div className={'flex-row m-2 space-x-2'}>
+        <Link href='/patients'>
+          <Button>Go to Client Page</Button>
+        </Link>
+        <form
+          className='inline'
+          action={async () => {
+            'use server';
+            await signOut();
+          }}
+        >
+          <Button type='submit'>Logout</Button>
+        </form>
+      </div>
       <Accordion type='single' collapsible>
         <AccordionItem value='item-1'>
           <AccordionTrigger className='text-xl font-bold'>
