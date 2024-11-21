@@ -1,7 +1,6 @@
 import CredentialsProvider from 'next-auth/providers/credentials';
 import NextAuth, { type NextAuthConfig, type Session } from 'next-auth';
 import type { DefaultJWT, JWT } from 'next-auth/jwt';
-import client from '@/lib/api';
 import type { components } from '@/types/openapi';
 import parseCookieExpiry from '@/lib/parseCookieExpiry';
 import { DJANGO_API_BASE_URL } from './utils/constants';

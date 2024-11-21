@@ -44,7 +44,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/appointments/${number}/`]: {
+    "/appointments/{id}/": {
         parameters: {
             query?: never;
             header?: never;
@@ -152,7 +152,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/appointments/types/${number}/`]: {
+    "/appointments/types/{id}/": {
         parameters: {
             query?: never;
             header?: never;
@@ -619,7 +619,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/notes/optician-notes/${number}/`]: {
+    "/notes/optician-notes/{id}/": {
         parameters: {
             query?: never;
             header?: never;
@@ -771,7 +771,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/notes/support-notes/${number}/`]: {
+    "/notes/support-notes/{id}/": {
         parameters: {
             query?: never;
             header?: never;
@@ -903,7 +903,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/patients/patient-prescriptions/${number}/`]: {
+    "/patients/patient-prescriptions/{id}/": {
         parameters: {
             query?: never;
             header?: never;
@@ -1014,7 +1014,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    [path: `/patients/patient-profiles/${number}/`]: {
+    "/patients/patient-profiles/{id}/": {
         parameters: {
             query?: never;
             header?: never;
