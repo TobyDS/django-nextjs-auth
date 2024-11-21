@@ -1,46 +1,49 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import useApi from '@/hooks/useApi';
 import useSafeSession from '@/hooks/useSafeSession';
+import Link from 'next/link';
+import { signOut } from 'next-auth/react';
 
 export default function PatientList() {
   const session = useSafeSession();
 
   const $api = useApi();
 
+  // Get logic example
   const {
     isLoading,
     data: patients,
     error,
   } = $api.useQuery('get', '/patients/patient-profiles/');
 
-  // const mutation = $api.useMutation('post', '/patients/patient-profiles/');
-  // const handleUpdate = async () => {
-  //   try {
-  //     await mutation.mutateAsync({
-  //       params: {
-  //         id: '3', // or 3 depending on your API spec
-  //       },
-  //       body: {
-  //         // whatever fields you want to update
-  //         first_name: 'John',
-  //         last_name: 'Doe',
-  //       },
-  //     });
-  //     // Optionally invalidate queries to refetch data
-  //     api.queryClient.invalidateQueries({
-  //       queryKey: ['get', '/patients/patient-profiles/'],
-  //     });
-  //   } catch (error) {
-  //     console.error('Failed to update:', error);
-  //   }
-  // };
-
-  // return (
-  //   <button onClick={handleUpdate} disabled={mutation.isPending}>
-  //     {mutation.isPending ? 'Updating...' : 'Update Patient'}
-  //   </button>
-  // );
+  // Mutation example
+  const { data: patientToUpdate } = $api.useQuery(
+    'get',
+    '/patients/patient-profiles/{id}/',
+    { params: { path: { id: 6 } } }
+  );
+  const mutation = $api.useMutation('put', '/patients/patient-profiles/{id}/');
+  const handleUpdate = () =>
+    mutation.mutateAsync({
+      params: {
+        path: {
+          id: 6,
+        },
+      },
+      body: {
+        ...patientToUpdate!,
+        last_name: 'Doe',
+        first_name: 'John',
+      },
+    });
 
   if (isLoading) {
     return (
@@ -60,8 +63,22 @@ export default function PatientList() {
 
   return (
     <div>
-      <h2 className='text-xl font-bold'>Client Session:</h2>
-      <pre className='text-sm'>{JSON.stringify(session, null, 2)}</pre>
+      <div className='flex-row m-2 space-x-2'>
+        <Button>
+          <Link href='/'>Go to Server Page</Link>
+        </Button>
+        <Button onClick={() => signOut()}>Logout</Button>
+      </div>
+      <Accordion type='single' collapsible>
+        <AccordionItem value='item-1'>
+          <AccordionTrigger className='text-xl font-bold'>
+            Client Session:
+          </AccordionTrigger>
+          <AccordionContent>
+            <pre className='text-sm'>{JSON.stringify(session, null, 2)}</pre>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
       <h2 className='text-xl font-bold'>Patients</h2>
       <span>Total: {patients?.length || 0}</span>
       <ul className=''>
@@ -82,6 +99,9 @@ export default function PatientList() {
           </li>
         ))}
       </ul>
+      <Button onClick={handleUpdate} disabled={mutation.isPending}>
+        {mutation.isPending ? 'Updating...' : 'Update Patient'}
+      </Button>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { auth } from '@/auth';
+import { auth, signOut } from '@/auth';
 import api from '@/lib/api';
 import {
   Accordion,
@@ -8,6 +8,7 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { revalidatePath } from 'next/cache';
+import Link from 'next/link';
 
 export default async function Home() {
   const session = await auth();
@@ -46,6 +47,18 @@ export default async function Home() {
 
   return (
     <div>
+      <form
+        className='flex-row m-2 space-x-2'
+        action={async () => {
+          'use server';
+          await signOut();
+        }}
+      >
+        <Button>
+          <Link href='/patients'>Go to Client Page</Link>
+        </Button>
+        <Button type='submit'>Logout</Button>
+      </form>
       <Accordion type='single' collapsible>
         <AccordionItem value='item-1'>
           <AccordionTrigger className='text-xl font-bold'>

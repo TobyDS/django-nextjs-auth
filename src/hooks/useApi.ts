@@ -9,9 +9,6 @@ import { useMemo } from 'react';
 const createApiClient = () => {
   const fetchClient = createFetchClient<paths>({
     baseUrl: '/api/proxy',
-    headers: {
-      'Content-Type': 'application/json',
-    },
   });
 
   return createClient(fetchClient);
