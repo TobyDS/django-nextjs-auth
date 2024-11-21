@@ -22,7 +22,7 @@ let refreshToken: string | undefined;
  */
 export const authMiddleware: Middleware = {
   async onRequest({ request }) {
-    if (request.url.includes('/auth/login')) {
+    if (request.url.includes('/api/auth/signin')) {
       return request;
     }
 
@@ -45,6 +45,7 @@ export const authMiddleware: Middleware = {
         accessToken = session.accessToken;
         refreshToken = session.refreshToken;
       } else {
+        console.log('Session: ', session);
         console.error('Failed to retrieve session tokens.');
         throw new Error('Authentication error');
       }

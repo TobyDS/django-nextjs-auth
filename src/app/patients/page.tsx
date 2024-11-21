@@ -1,24 +1,48 @@
 'use client';
 
-import { useApi } from '@/hooks/useApi';
-import useSession from '@/hooks/useSession';
-
-interface Patient {
-  id: number;
-  full_name: string;
-  email?: string;
-}
+import useApi from '@/hooks/useApi';
+import useSafeSession from '@/hooks/useSafeSession';
 
 export default function PatientList() {
-  const session = useSession();
-  const {
-    data: patients,
-    loading,
-    error,
-    refetch,
-  } = useApi<Patient[]>('/patients/patient-profiles/');
+  // const { data: session } = useSafeSession();
 
-  if (loading) {
+  const $api = useApi();
+
+  const {
+    isLoading,
+    data: patients,
+    error,
+  } = $api.useQuery('get', '/patients/patient-profiles/');
+
+  // const mutation = $api.useMutation('post', '/patients/patient-profiles/');
+  // const handleUpdate = async () => {
+  //   try {
+  //     await mutation.mutateAsync({
+  //       params: {
+  //         id: '3', // or 3 depending on your API spec
+  //       },
+  //       body: {
+  //         // whatever fields you want to update
+  //         first_name: 'John',
+  //         last_name: 'Doe',
+  //       },
+  //     });
+  //     // Optionally invalidate queries to refetch data
+  //     api.queryClient.invalidateQueries({
+  //       queryKey: ['get', '/patients/patient-profiles/'],
+  //     });
+  //   } catch (error) {
+  //     console.error('Failed to update:', error);
+  //   }
+  // };
+
+  // return (
+  //   <button onClick={handleUpdate} disabled={mutation.isPending}>
+  //     {mutation.isPending ? 'Updating...' : 'Update Patient'}
+  //   </button>
+  // );
+
+  if (isLoading) {
     return (
       <div className='flex justify-center items-center p-4'>
         <p className='text-gray-500'>Loading data...</p>
@@ -27,17 +51,7 @@ export default function PatientList() {
   }
 
   if (error) {
-    return (
-      <div className='p-4 text-red-500'>
-        Error: {error}
-        <button
-          onClick={refetch}
-          className='ml-2 text-blue-500 hover:underline'
-        >
-          Retry
-        </button>
-      </div>
-    );
+    return <div className='p-4 text-red-500'>Error: {error}</div>;
   }
 
   if (!patients?.length) {
@@ -47,7 +61,7 @@ export default function PatientList() {
   return (
     <div>
       <h2 className='text-xl font-bold'>Client Session:</h2>
-      <pre className='text-sm'>{JSON.stringify(session, null, 2)}</pre>
+      {/* <pre className='text-sm'>{JSON.stringify(session, null, 2)}</pre> */}
       <h2 className='text-xl font-bold'>Patients</h2>
       <span>Total: {patients?.length || 0}</span>
       <ul className=''>

@@ -4,6 +4,7 @@ import type { DefaultJWT, JWT } from 'next-auth/jwt';
 import client from '@/lib/api';
 import type { components } from '@/types/openapi';
 import parseCookieExpiry from '@/lib/parseCookieExpiry';
+import { DJANGO_API_BASE_URL } from './utils/constants';
 
 const SECONDS_IN_DAY = 24 * 60 * 60;
 
@@ -30,24 +31,24 @@ export const authConfig = {
         const { username, password } = credentials;
 
         try {
-          const { data, error, response } = await client.POST('/auth/login/', {
-            body: {
-              username: username,
-              password: password,
+          const res = await fetch(`${DJANGO_API_BASE_URL}/auth/login/`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
             },
+            body: JSON.stringify({ username, password }),
           });
 
-          if (error) {
+          if (!res.ok) {
             console.error(
-              'Response not OK:',
-              response,
-              'Error details:',
-              error
+              `Response not OK: ${res.status} Error details: ${res.statusText}`
             );
             return null;
           }
 
-          const cookies = response.headers.get('set-cookie');
+          const data = await res.json();
+          console.log('Login response: ', data);
+          const cookies = res.headers.get('set-cookie');
 
           const accessToken = cookies?.match(/access_token=([^;]+)/)?.[1];
           const refreshToken = cookies?.match(/refresh_token=([^;]+)/)?.[1];
@@ -90,6 +91,11 @@ export const authConfig = {
       }
       return token;
     },
+    // authorized: async ({ auth }) => {
+    //   // Logged in users are authenticated, otherwise redirect to login page
+    //   console.log('Authorized:', !!auth);
+    //   return !!auth;
+    // },
     async session({
       session,
       token,
